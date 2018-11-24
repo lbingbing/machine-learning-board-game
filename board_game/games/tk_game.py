@@ -2,11 +2,12 @@ import tkinter as tk
 import tkinter.ttk
 import queue
 import threading
+import time
 
 from board_game.players.player import is_human
 
-COMPUTER_STEP_DELAY = 500
-ASYNC_RESPONSE_POLL_INTERVAL = 100
+COMPUTER_STEP_DELAY_IN_SECOND = 0.5
+ASYNC_RESPONSE_POLL_INTERVAL_IN_MILLISECOND = 100
 
 class BaseApp:
 
@@ -36,6 +37,7 @@ class BaseApp:
                 break
             func, arg = item
             action = func(arg)
+            time.sleep(COMPUTER_STEP_DELAY_IN_SECOND)
             self.response_queue.put(action)
 
     def mainloop(self):
@@ -124,9 +126,9 @@ class BaseApp:
             self.apply_action(action)
             self.draw_marker(action)
             if self.is_computer_trun() and not self.state.is_end():
-                self.root.after(COMPUTER_STEP_DELAY, self.computer_step)
+                self.computer_step()
         except queue.Empty:
-            self.get_async_action_id = self.root.after(ASYNC_RESPONSE_POLL_INTERVAL, self.poll_async_response)
+            self.get_async_action_id = self.root.after(ASYNC_RESPONSE_POLL_INTERVAL_IN_MILLISECOND, self.poll_async_response)
             self.is_polling_async_response = True
 
     def handle_human_action(self, x, y):
