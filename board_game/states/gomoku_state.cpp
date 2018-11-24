@@ -1,4 +1,32 @@
+#include <algorithm>
+
 #include "gomoku_state.h"
+
+GomokuState::GomokuState(int board_height, int board_width, int target, const std::string& state_compact_str, int player_id) : BlackWhiteState(board_height, board_width, state_compact_str, player_id), m_target(target) {
+    for (int i = 0; i < m_board_height; ++i) {
+        for (int j = 0; j < m_board_width; ++j) {
+            if (m_board[i][j] == 0) {
+                m_legal_actions.push_back({i, j});
+            }
+        }
+    }
+}
+
+void GomokuState::reset() {
+    BlackWhiteState::reset();
+    m_legal_actions.clear();
+    m_legal_actions.reserve(m_board_height * m_board_width);
+    for (int i = 0; i < m_board_height; ++i) {
+        for (int j = 0; j < m_board_width; ++j) {
+            m_legal_actions.push_back({i, j});
+        }
+    }
+}
+
+const BlackWhiteState::Actions& GomokuState::get_legal_actions(int player_id) const {
+    assert(m_last_player_id!=player_id);
+    return m_legal_actions;
+}
 
 int GomokuState::get_result() const {
     if (m_last_action[0] == -1 && m_last_action[1] == -1) return -1;
@@ -45,5 +73,10 @@ int GomokuState::get_result() const {
     if (i2-i1+1 >= m_target) return m_last_player_id;
     // draw or not end yet
     return (m_piece_num == m_board_height * m_board_width) ? 0 : -1;
+}
+
+void GomokuState::do_action(int player_id, const Action& action) {
+    BlackWhiteState::do_action(player_id, action);
+    m_legal_actions.erase(std::remove(std::begin(m_legal_actions), std::end(m_legal_actions), action), std::end(m_legal_actions));
 }
 

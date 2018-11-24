@@ -69,8 +69,7 @@ class ChessApp(BaseApp):
         self.human_action_src_position = None
         self.human_action_legal_dst_positions = None
 
-    def reset_pieces(self):
-        self.piece_canvas_objs = {}
+    def redraw_pieces(self):
         self.canvas.delete('pieces')
 
         board = self.state.get_board()
@@ -78,25 +77,11 @@ class ChessApp(BaseApp):
             for j in range(self.state.board_shape[1]):
                 piece_value = board[i][j]
                 if piece_value != chess_state.NULL:
+                    coords = self.get_piece_coord((i, j))
                     piece_color = '#ff0000' if chess_state.piece_value_to_player_id(piece_value) == 1 else '#000000'
-                    piece_oval_canvas_obj = self.canvas.create_oval(0, 0, 0, 0, fill = '#ffffff', outline = piece_color, tags = 'pieces')
+                    self.canvas.create_oval(*coords, fill = '#ffffff', outline = piece_color, tags = 'pieces')
                     piece_name = chess_state.piece_value_to_name(piece_value)
-                    piece_text_canvas_obj = self.canvas.create_text(0, 0, text = piece_name, fill = piece_color, tags = 'pieces')
-                    piece_canvas_obj = {
-                            'oval' : piece_oval_canvas_obj,
-                            'text' : piece_text_canvas_obj,
-                        }
-                    self.place_piece(piece_canvas_obj, (i, j))
-
-    def place_piece(self, piece_canvas_obj, position):
-        assert(position not in self.piece_canvas_objs)
-        self.piece_canvas_objs[position] = piece_canvas_obj
-
-        piece_oval_canvas_obj = piece_canvas_obj['oval']
-        piece_text_canvas_obj = piece_canvas_obj['text']
-        coords = self.get_piece_coord(position)
-        self.canvas.coords(piece_oval_canvas_obj, *coords)
-        self.canvas.coords(piece_text_canvas_obj, (coords[0]+coords[2])/2, (coords[1]+coords[3])/2)
+                    self.canvas.create_text((coords[0]+coords[2])/2, (coords[1]+coords[3])/2, text = piece_name, fill = piece_color, tags = 'pieces')
 
     def reset_marker(self):
         self.canvas.coords('src_marker', 0, 0, 0, 0)
@@ -127,22 +112,7 @@ class ChessApp(BaseApp):
                         self.computer_step()
 
     def is_self_piece(self, player_id, position):
-        return chess_state.piece_value_to_player_id(self.state.board[position[0]][position[1]])==player_id
-
-    def draw_action(self, action):
-        src_position = (action[0], action[1])
-        dst_position = (action[2], action[3])
-
-        dst_piece_canvas_obj = self.piece_canvas_objs.pop(dst_position, None)
-        if dst_piece_canvas_obj != None:
-            dst_piece_oval_canvas_obj = dst_piece_canvas_obj['oval']
-            dst_piece_text_canvas_obj = dst_piece_canvas_obj['text']
-            self.canvas.delete(dst_piece_oval_canvas_obj)
-            self.canvas.delete(dst_piece_text_canvas_obj)
-
-        src_piece_canvas_obj = self.piece_canvas_objs[src_position]
-        del self.piece_canvas_objs[src_position]
-        self.place_piece(src_piece_canvas_obj, dst_position)
+        return chess_state.piece_value_to_player_id(self.state.get_board()[position[0]][position[1]])==player_id
 
     def draw_marker(self, action):
         self.draw_src_marker((action[0], action[1]))

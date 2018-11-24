@@ -80,7 +80,7 @@ class BaseApp:
         self.cancel_async_request()
 
         self.state.reset()
-        self.reset_pieces()
+        self.redraw_pieces()
         self.reset_marker()
         self.cur_player_index = 0
         self.cur_player = self.players[self.cur_player_index]
@@ -93,7 +93,7 @@ class BaseApp:
             self.response_queue.get()
             self.is_async_request_sent = False
 
-    def reset_pieces(self):
+    def redraw_pieces(self):
         pass
 
     def reset_marker(self):
@@ -147,7 +147,7 @@ class BaseApp:
     def apply_action(self, action):
         self.state.do_action(self.cur_player.player_id, action)
 
-        self.draw_action(action)
+        self.redraw_pieces()
         self.root.update_idletasks()
 
         result = self.state.get_result()
@@ -164,9 +164,6 @@ class BaseApp:
         x1 = x0 + self.unit_size
         y1 = y0 + self.unit_size
         return x0, y0, x1, y1
-
-    def draw_action(self, action):
-        pass
 
     def draw_marker(self, action):
         pass

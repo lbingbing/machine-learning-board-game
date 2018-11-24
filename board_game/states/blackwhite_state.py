@@ -12,7 +12,6 @@ class BlackWhiteState:
         self.last_player_id = 2
         self.last_action = None
         self.piece_num = 0
-        self.legal_actions = set((i, j) for i in range(self.board_shape[0]) for j in range(self.board_shape[1]))
 
     def copy(self, rhs):
         self.board_shape = rhs.board_shape
@@ -20,7 +19,6 @@ class BlackWhiteState:
         self.last_player_id = rhs.last_player_id
         self.last_action = rhs.last_action
         self.piece_num = rhs.piece_num
-        self.legal_actions = set(rhs.legal_actions)
 
     def __str__(self):
         return '\n\n'.join(map(lambda row: '  '.join(map(str, row)), self.board)).replace('0', '-')
@@ -31,9 +29,11 @@ class BlackWhiteState:
     def get_cur_player_id(self):
         return get_next_player_id(self.last_player_id)
 
+    def get_board(self):
+        return self.board
+
     def get_legal_actions(self, player_id):
         assert(self.last_player_id!=player_id)
-        return tuple(self.legal_actions)
 
     def is_end(self):
         return self.get_result() >= 0
@@ -54,7 +54,6 @@ class BlackWhiteState:
         self.last_player_id = player_id
         self.last_action = action
         self.piece_num += 1
-        self.legal_actions.remove(action)
 
     def to_state_m(self):
         res = 3 - np.array(self.board).reshape(-1) * 2

@@ -3,12 +3,20 @@ from .blackwhite_state import BlackWhiteState
 class GomokuState(BlackWhiteState):
     def __init__(self, board_shape, target = 5):
         super().__init__(board_shape)
-
         self.target = target
+
+    def reset(self):
+        super().reset()
+        self.legal_actions = set((i, j) for i in range(self.board_shape[0]) for j in range(self.board_shape[1]))
 
     def copy(self, rhs):
         super().copy(rhs)
         self.target = rhs.target
+        self.legal_actions = set(rhs.legal_actions)
+
+    def get_legal_actions(self, player_id):
+        super().get_legal_actions(player_id)
+        return tuple(self.legal_actions)
 
     def get_result(self):
         if self.last_action == None:
@@ -59,4 +67,8 @@ class GomokuState(BlackWhiteState):
             return self.last_player_id
         # draw or not end yet
         return 0 if self.piece_num == self.board_shape[0] * self.board_shape[1] else -1
+
+    def do_action(self, player_id, action):
+        super().do_action(player_id, action)
+        self.legal_actions.remove(action)
 
