@@ -1,3 +1,5 @@
+import os
+
 from . import player
 
 def create_player(state, player_type, player_id):
@@ -19,15 +21,15 @@ def create_player(state, player_type, player_id):
         p = ChessCppMctsPlayer(player_id = player_id, sim_num = 100000)
     elif player_type == player.DQN_PLAYER:
         from .dqn.chess_dqn_player import ChessDqnPlayer
-        model_path = 'chess_dqn_model'
+        model_path = os.path.join(os.path.dirname(__file__), 'dqn', 'chess_dqn_model')
         p = ChessDqnPlayer(player_id = player_id, board_shape = state.board_shape, action_dim = state.get_action_dim(), model_path = model_path)
     elif player_type == player.POLICYNET_PLAYER:
         from .policynet.chess_policynet_player import ChessPolicyNetPlayer
-        model_path = 'chess_policynet_model'
+        model_path = os.path.join(os.path.dirname(__file__), 'policynet', 'chess_policynet_model')
         p = ChessPolicyNetPlayer(player_id = player_id, board_shape = state.board_shape, action_dim = state.get_action_dim(), model_path = model_path)
     elif player_type == player.POLICYVALUENETMCTS_PLAYER:
         from .policyvaluenetmcts.chess_policyvaluenetmcts_player import ChessPolicyValueNetMctsPlayer
-        model_path = 'chess_policyvaluenet_model'
+        model_path = os.path.join(os.path.dirname(__file__), 'policyvaluenetmcts', 'chess_policyvaluenet_model')
         p = ChessPolicyValueNetMctsPlayer(player_id = player_id, board_shape = state.board_shape, action_dim = state.get_action_dim(), model_path = model_path, sim_num = 1000)
     return p
 

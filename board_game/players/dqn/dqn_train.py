@@ -64,12 +64,18 @@ def main(state, model, config):
     for k, v in config.items():
         print('{0}: {1}'.format(k, v))
 
-    model.init_parameters()
-    #model.load()
+    if os.path.isdir(config['model_path']):
+        model.load()
+        print('model loaded')
+    else:
+        model.init_parameters()
+        print('model initialized')
     if os.path.isfile(config['replaymemory_file_path']):
         rmemory = replaymemory.loadfromfile(config['replaymemory_file_path'])
+        print('replay memory loaded')
     else:
         rmemory = replaymemory.ReplayMemory(max_size = config['replaymemory_size'])
+        print('replay memory initialized')
     scores = [0] * 3
     for episode_id in range(1, config['episode_num']+1):
         state.reset()
@@ -85,9 +91,13 @@ def main(state, model, config):
             state.do_action(1, action)
             max_Q_logit2, max_Q2 = map(np.asscalar, model.get_max_Q_m(state.to_state_m(), state.get_legal_action_mask_m()))
             print('episode: {0} L: {1:.8f} m_Q_l1: {2:.2f} m_Q1: {3:.6f} m_Q_l2: {4:.2f} m_Q2: {5:.6f} p1/p2/draw: {6}/{7}/{8}'.format(episode_id, loss, max_Q_logit1, max_Q1, max_Q_logit2, max_Q2, scores[1], scores[2], scores[0]))
-        #model.save()
-        #replaymemory.savetofile(rmemory, config['replaymemory_file_path'])
-        if os.path.isfile('dqn_train_stop'):
+        if os.path.isfile(config['save_flag_file_path']):
+            model.save()
+            print('model saved')
+            replaymemory.savetofile(rmemory, config['replaymemory_file_path'])
+            print('replay memory saved')
+            os.rename(config['save_flag_file_path'], config['saved_flag_file_path'])
+        if os.path.isfile(config['stop_flag_file_path']):
             print('stopped')
             break
 

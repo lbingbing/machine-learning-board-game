@@ -87,10 +87,18 @@ def main(state, pmodel, emodel, config):
     for k, v in config.items():
         print('{0}: {1}'.format(k, v))
 
-    pmodel.init_parameters()
-    #pmodel.load()
-    emodel.init_parameters()
-    #emodel.load()
+    if os.path.isdir(config['pmodel_path']):
+        pmodel.load()
+        print('pmodel loaded')
+    else:
+        pmodel.init_parameters()
+        print('pmodel initialized')
+    if os.path.isdir(config['emodel_path']):
+        emodel.load()
+        print('emodel loaded')
+    else:
+        emodel.init_parameters()
+        print('emodel initialized')
     scores = [0] * 3
     for episode_id in range(1, config['episode_num']+1):
         samples, results = sample(state, pmodel, config['batch_size'])
@@ -113,9 +121,13 @@ def main(state, pmodel, emodel, config):
             _, action_m2 = pmodel.get_P(state_m)
             entropy2 = get_entropy(action_m2.reshape(-1))
             print('episode: {0} P_e1: {1:.6f} V1: {2:.6f} P_e2: {3:.6f} V2: {4:.6f} p1/p2/draw: {5}/{6}/{7}'.format(episode_id, entropy1, V1, entropy2, V2, scores[1], scores[2], scores[0]))
-        #pmodel.save()
-        #emodel.save()
-        if os.path.isfile('policynet_train_stop'):
+        if os.path.isfile(config['save_flag_file_path']):
+            pmodel.save()
+            print('pmodel saved')
+            emodel.save()
+            print('emodel saved')
+            os.rename(config['save_flag_file_path'], config['saved_flag_file_path'])
+        if os.path.isfile(config['stop_flag_file_path']):
             print('stopped')
             break
 

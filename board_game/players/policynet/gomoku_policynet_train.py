@@ -1,4 +1,6 @@
 def main():
+    import os
+
     from board_game.states.gomoku_state import GomokuState
     from .gomoku_policynet import GomokuPolicyNetModel
     from .gomoku_evaluationnet import GomokuEvaluationNetModel
@@ -13,8 +15,10 @@ def main():
 
     state = GomokuState(board_shape = board_shape, target = target)
     pmodel_path = 'gomoku_policynet_model_{0}_{1}_{2}'.format(board_shape[0], board_shape[1], target)
+    pmodel_path = os.path.join(os.path.dirname(__file__), pmodel_path)
     pmodel = GomokuPolicyNetModel(board_shape = state.board_shape, action_dim = state.get_action_dim(), model_path = pmodel_path)
     emodel_path = 'gomoku_evaluationnet_model_{0}_{1}_{2}'.format(board_shape[0], board_shape[1], target)
+    emodel_path = os.path.join(os.path.dirname(__file__), emodel_path)
     emodel = GomokuEvaluationNetModel(board_shape = state.board_shape, action_dim = state.get_action_dim(), model_path = emodel_path)
 
     config = {
@@ -24,6 +28,9 @@ def main():
         'batch_size' : 4,
         'learning_rate' : 0.0003,
         'episode_num' : 2000000,
+        'save_flag_file_path' : os.path.join(os.path.dirname(__file__), 'gomoku_policynet_train.save'),
+        'saved_flag_file_path' : os.path.join(os.path.dirname(__file__), 'gomoku_policynet_train.saved'),
+        'stop_flag_file_path' : os.path.join(os.path.dirname(__file__), 'gomoku_policynet_train.stop'),
     }
 
     policynet_train.main(state, pmodel, emodel, config)

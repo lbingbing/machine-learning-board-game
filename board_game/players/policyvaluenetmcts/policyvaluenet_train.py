@@ -62,12 +62,18 @@ def main(state, model, config):
 
     learning_rate = config['learning_rate']
 
-    model.init_parameters()
-    #model.load()
+    if os.path.isdir(config['model_path']):
+        model.load()
+        print('model loaded')
+    else:
+        model.init_parameters()
+        print('model initialized')
     if os.path.isfile(config['replaymemory_file_path']):
         rmemory = replaymemory.loadfromfile(config['replaymemory_file_path'])
+        print('replay memory loaded')
     else:
         rmemory = replaymemory.ReplayMemory(max_size = config['replaymemory_size'])
+        print('replay memory initialized')
     scores = [0] * 3
     dlr = DynamicLR(lr = learning_rate, min_lr = learning_rate / 100, max_lr = learning_rate, avg_window_size = 80, cmp_window_size = 40)
     for episode_id in range(1, config['episode_num']+1):
@@ -85,9 +91,13 @@ def main(state, model, config):
             print('adjust learning_rate: {0} -> {1}'.format(learning_rate, dlr.lr))
             learning_rate = dlr.lr
 
-        #model.save()
-        #replaymemory.savetofile(rmemory, config['replaymemory_file_path'])
-        if os.path.isfile('policyvaluenet_train_stop'):
+        if os.path.isfile(config['save_flag_file_path']):
+            model.save()
+            print('model saved')
+            replaymemory.savetofile(rmemory, config['replaymemory_file_path'])
+            print('replay memory saved')
+            os.rename(config['save_flag_file_path'], config['saved_flag_file_path'])
+        if os.path.isfile(config['stop_flag_file_path']):
             print('stopped')
             break
 
