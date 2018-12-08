@@ -13,13 +13,6 @@ class BlackWhiteState:
         self.last_action = None
         self.piece_num = 0
 
-    def copy(self, rhs):
-        self.board_shape = rhs.board_shape
-        self.board = list(list(e) for e in rhs.board)
-        self.last_player_id = rhs.last_player_id
-        self.last_action = rhs.last_action
-        self.piece_num = rhs.piece_num
-
     def __str__(self):
         return '\n\n'.join(map(lambda row: '  '.join(map(str, row)), self.board)).replace('0', '-')
 

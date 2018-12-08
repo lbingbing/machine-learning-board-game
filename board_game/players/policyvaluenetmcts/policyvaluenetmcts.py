@@ -58,10 +58,9 @@ class MctsTree:
         self.root_state = copy.deepcopy(root_state)
 
     def get_legal_Ps(self):
-        state = copy.deepcopy(self.root_state)
         for sim_id in range(self.sim_num):
             node = self.root_node
-            state.copy(self.root_state)
+            state = copy.deepcopy(self.root_state)
 
             while not node.is_leaf():
                 node = node.uct_select_children()

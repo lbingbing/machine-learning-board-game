@@ -4,14 +4,15 @@
 #include <array>
 #include <vector>
 #include <string>
-#include <algorithm>
-#include <iterator>
 #include <iostream>
 
 class ChessState {
 public:
     static constexpr int BOARD_WIDTH  = 9;
     static constexpr int BOARD_HEIGHT = 10;
+
+    static constexpr int MAX_ACTION_NUM = 200;
+    static constexpr int MAX_NO_KILL_ACTION_NUM = 50;
                      
     static constexpr int NUL     = 0;
     static constexpr int R_JIANG = 1;
@@ -34,7 +35,7 @@ public:
     using Actions = std::vector<Action>;
 
     ChessState() { reset(); }
-    ChessState(const std::string& state_compact_str, int player_id, int left_action_num);
+    ChessState(const std::string& state_compact_str, const std::string& board_history_compact_str, int player_id, int left_action_num, int left_no_kill_action_num);
 
     void         reset();
     std::string  to_compact_string() const;
@@ -53,9 +54,11 @@ private:
     void append_legal_action_MA(Actions& legal_actions, int i, int j, int sign) const;
     void append_legal_action_JU(Actions& legal_actions, int i, int j, int sign) const;
 
-    Board  m_board;
-    int    m_cur_player_id;
-    int    m_left_action_num;
+    Board               m_board;
+    std::vector<Board>  m_board_history;
+    int                 m_cur_player_id;
+    int                 m_left_action_num;
+    int                 m_left_no_kill_action_num;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const ChessState::Action& action) {

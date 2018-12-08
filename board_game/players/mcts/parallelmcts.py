@@ -47,10 +47,9 @@ class Node:
         self.Q = self.W / self.N
 
 def search(root_node, root_state, sim_num):
-    state = copy.deepcopy(root_state)
     for sim_id in range(sim_num):
         node = root_node
-        state.copy(root_state)
+        state = copy.deepcopy(root_state)
 
         while not state.is_end() and node.is_fully_expanded():
             node = node.uct_select_children()

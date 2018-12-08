@@ -59,10 +59,9 @@ class MctsTree:
         assert(self.root_state.compact_str()==state.compact_str())
         assert(self.root_node.player_id!=player_id)
 
-        state = copy.deepcopy(self.root_state)
         for sim_id in range(self.sim_num):
             node = self.root_node
-            state.copy(self.root_state)
+            state = copy.deepcopy(self.root_state)
 
             while not state.is_end() and node.is_fully_expanded():
                 node = node.uct_select_children()

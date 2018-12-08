@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <iterator>
 #include <cassert>
 #include <sstream>
@@ -6,18 +5,29 @@
 #include "chess_state.h"
 #include "utils.h"
 
-ChessState::ChessState(const std::string& state_compact_str, int player_id, int left_action_num) : m_cur_player_id(player_id), m_left_action_num(left_action_num) {
-    int index = 0;
-    for (int i = 0; i < BOARD_HEIGHT; ++i) {
-        for (int j = 0; j < BOARD_WIDTH; ++j) {
+void parse_board_compact_str(ChessState::Board& board, const char* board_compact_str, int& index) {
+    for (int i = 0; i < ChessState::BOARD_HEIGHT; ++i) {
+        for (int j = 0; j < ChessState::BOARD_WIDTH; ++j) {
             int sign = 1;
-            if (state_compact_str[index] == '-') {
+            if (board_compact_str[index] == '-') {
                 sign = -1;
                 ++index;
             }
-            int p = (state_compact_str[index++] - '0') * sign;
-            m_board[i][j] = p;
+            int p = (board_compact_str[index++] - '0') * sign;
+            board[i][j] = p;
         }
+    }
+}
+
+ChessState::ChessState(const std::string& state_compact_str, const std::string& board_history_compact_str, int player_id, int left_action_num, int left_no_kill_action_num) : m_cur_player_id(player_id), m_left_action_num(left_action_num), m_left_no_kill_action_num(left_no_kill_action_num) {
+    int index;
+    index = 0;
+    parse_board_compact_str(m_board, state_compact_str.c_str(), index);
+    assert(board_history_compact_str[0]=='h');
+    index = 1;
+    while(index < board_history_compact_str.size()) {
+        m_board_history.push_back({});
+        parse_board_compact_str(m_board_history.back(), board_history_compact_str.c_str(), index);
     }
 }
 
@@ -32,8 +42,10 @@ void ChessState::reset() {
                NUL   , R_PAO, NUL    , NUL  , NUL    , NUL  , NUL    , R_PAO, NUL   ,
                NUL   , NUL  , NUL    , NUL  , NUL    , NUL  , NUL    , NUL  , NUL   ,
                R_JU  , R_MA , R_XIANG, R_SHI, R_JIANG, R_SHI, R_XIANG, R_MA , R_JU  };
+    m_board_history.clear();
     m_cur_player_id = 1;
-    m_left_action_num = 200;
+    m_left_action_num = MAX_ACTION_NUM;
+    m_left_no_kill_action_num = MAX_NO_KILL_ACTION_NUM;
 }
 
 std::string ChessState::to_compact_string() const {
@@ -86,24 +98,36 @@ ChessState::Actions ChessState::get_legal_actions(int player_id) const {
 int ChessState::get_result() const {
     if (m_cur_player_id == 1) {
         bool player2_wins = true;
-        for (const auto &row : m_board) {
-            if (std::find(std::begin(row), std::end(row), int(R_JIANG)) != std::end(row)) {
-                player2_wins = false;
-                break;
+        for (int i = 7; i <= 9; ++i) {
+            for (int j = 3; j <= 5; ++j) {
+                if (m_board[i][j]==R_JIANG) {
+                    player2_wins = false;
+                    break;
+                }
             }
         }
         if (player2_wins) return 2;
     } else {
         bool player1_wins = true;
-        for (const auto& row : m_board) {
-            if (std::find(std::begin(row), std::end(row), int(B_JIANG)) != std::end(row)) {
-                player1_wins = false;
-                break;
+        for (int i = 0; i <= 2; ++i) {
+            for (int j = 3; j <= 5; ++j) {
+                if (m_board[i][j]==B_JIANG) {
+                    player1_wins = false;
+                    break;
+                }
             }
         }
         if (player1_wins) return 1;
     }
-    return m_left_action_num == 0 ? 0 : -1;
+    if (m_board_history.size() == 8 &&
+        m_board == m_board_history[0] &&
+        m_board_history[0] == m_board_history[4] &&
+        m_board_history[1] == m_board_history[5] &&
+        m_board_history[2] == m_board_history[6] &&
+        m_board_history[3] == m_board_history[7]) {
+        return 0;
+    }
+    return (m_left_no_kill_action_num == 0 || m_left_action_num == 0) ? 0 : -1;
 }
 
 void ChessState::do_action(int player_id, const Action& action) {
@@ -112,10 +136,14 @@ void ChessState::do_action(int player_id, const Action& action) {
            player_id==2 && m_board[action[0]][action[1]]<NUL);
     assert(player_id==1 && m_board[action[2]][action[3]]<=NUL ||
            player_id==2 && m_board[action[2]][action[3]]>=NUL);
+    m_board_history.push_back(m_board);
+    if (m_board_history.size() > 8) m_board_history.erase(m_board_history.begin());
+    if (m_board[action[2]][action[3]]!=NUL) m_left_no_kill_action_num = MAX_NO_KILL_ACTION_NUM;
+    else                                    --m_left_no_kill_action_num;
     m_board[action[2]][action[3]] = m_board[action[0]][action[1]];
     m_board[action[0]][action[1]] = NUL;
-    --m_left_action_num;
     m_cur_player_id = get_next_player_id(player_id);
+    --m_left_action_num;
 }
 
 void ChessState::append_legal_action_JIANG(Actions& legal_actions, int i, int j, int sign) const {

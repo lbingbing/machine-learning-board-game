@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 from board_game.utils.utils import get_next_player_id
 
@@ -26,7 +27,8 @@ from board_game.utils.utils import get_next_player_id
 BOARD_WIDTH = 9
 BOARD_HEIGHT = 10
 
-MAX_ACTION_PER_GAME = 200
+MAX_ACTION_NUM = 200
+MAX_NO_KILL_ACTION_NUM = 50
 
 NULL = 0
 R_JIANG = 1
@@ -331,25 +333,10 @@ class ChessState:
                 [NULL  , NULL , NULL   , NULL , NULL   , NULL , NULL   , NULL , NULL  ],
                 [R_JU  , R_MA , R_XIANG, R_SHI, R_JIANG, R_SHI, R_XIANG, R_MA , R_JU  ],
             ]
-        #self.board = [
-        #        [NULL, NULL, NULL   , B_SHI, B_JIANG, B_SHI  , B_XIANG, NULL , NULL],
-        #        [NULL, NULL, NULL   , NULL , NULL   , NULL   , NULL   , NULL , NULL],
-        #        [NULL, NULL, NULL   , NULL , B_XIANG, NULL   , NULL   , NULL , NULL],
-        #        [NULL, NULL, NULL   , NULL , NULL   , NULL   , NULL   , NULL , NULL],
-        #        [NULL, NULL, NULL   , NULL , NULL   , NULL   , NULL   , NULL , NULL],
-        #        [NULL, NULL, NULL   , NULL , NULL   , NULL   , NULL   , NULL , NULL],
-        #        [NULL, NULL, NULL   , NULL , NULL   , NULL   , NULL   , NULL , NULL],
-        #        [NULL, NULL, NULL   , NULL , R_XIANG, NULL   , NULL   , NULL , NULL],
-        #        [NULL, NULL, NULL   , NULL , R_SHI  , NULL   , NULL   , R_PAO, NULL],
-        #        [NULL, NULL, R_XIANG, R_SHI, NULL   , R_JIANG, NULL   , R_PAO, NULL],
-        #    ]
-        self.left_action_num = MAX_ACTION_PER_GAME
+        self.board_history = []
         self.cur_player_id = 1
-
-    def copy(self, rhs):
-        self.board = list(list(e) for e in rhs.board)
-        self.left_action_num = rhs.left_action_num
-        self.cur_player_id = rhs.cur_player_id
+        self.left_action_num = MAX_ACTION_NUM
+        self.left_no_kill_action_num = MAX_NO_KILL_ACTION_NUM
 
     def __str__(self):
         return '\n\n'.join(map(lambda row: '  '.join(map('{0:2d}'.format, row)), self.board)).replace('0', '-')
@@ -357,8 +344,17 @@ class ChessState:
     def compact_str(self):
         return ''.join(map(lambda row: ''.join(map(str, row)), self.board))
 
+    def board_history_compact_str(self):
+        return 'h' + ''.join(''.join(map(lambda row: ''.join(map(str, row)), board)) for board in self.board_history)
+
     def get_cur_player_id(self):
         return self.cur_player_id
+
+    def get_left_action_num(self):
+        return self.left_action_num
+
+    def get_left_no_kill_action_num(self):
+        return self.left_no_kill_action_num
 
     def get_board(self):
         return self.board
@@ -407,7 +403,14 @@ class ChessState:
         else:
             if not any(self.board[i][j]==B_JIANG for i in (0, 1, 2) for j in (3, 4, 5)):
                 return 1
-        return 0 if self.left_action_num == 0 else -1
+        if len(self.board_history) == 8 and \
+           self.board == self.board_history[0] and \
+           self.board_history[0] == self.board_history[4] and \
+           self.board_history[1] == self.board_history[5] and \
+           self.board_history[2] == self.board_history[6] and \
+           self.board_history[3] == self.board_history[7]:
+            return 0
+        return 0 if (self.left_no_kill_action_num == 0 or self.left_action_num == 0) else -1
 
     def do_action(self, player_id, action):
         assert(self.cur_player_id==player_id)
@@ -415,10 +418,17 @@ class ChessState:
                player_id==2 and self.board[action[0]][action[1]]<NULL)
         assert(player_id==1 and self.board[action[2]][action[3]]<=NULL or
                player_id==2 and self.board[action[2]][action[3]]>=NULL)
+        self.board_history.append(copy.deepcopy(self.board))
+        if len(self.board_history) > 8:
+            del self.board_history[0]
+        if self.board[action[2]][action[3]] != NULL:
+            self.left_no_kill_action_num = MAX_NO_KILL_ACTION_NUM
+        else:
+            self.left_no_kill_action_num -= 1
         self.board[action[2]][action[3]] = self.board[action[0]][action[1]]
         self.board[action[0]][action[1]] = NULL
-        self.left_action_num -= 1
         self.cur_player_id = get_next_player_id(player_id)
+        self.left_action_num -= 1
 
     def to_state_m(self):
         res = np.array(self.board).reshape(-1) / 7

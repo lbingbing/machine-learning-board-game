@@ -9,11 +9,6 @@ class GomokuState(BlackWhiteState):
         super().reset()
         self.legal_actions = set((i, j) for i in range(self.board_shape[0]) for j in range(self.board_shape[1]))
 
-    def copy(self, rhs):
-        super().copy(rhs)
-        self.target = rhs.target
-        self.legal_actions = set(rhs.legal_actions)
-
     def get_legal_actions(self, player_id):
         super().get_legal_actions(player_id)
         return tuple(self.legal_actions)
