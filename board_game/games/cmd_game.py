@@ -1,17 +1,26 @@
+import argparse
 import itertools
+import os
 
+from .utils import get_cmd_options
 from board_game.players import player
+from board_game.utils.utils import save_transcript
 
-def main(state, create_player):
-    player_types = player.parse_cmd_player_types()
-    player1, player2 = [create_player(state, player_type, player_id) for player_id, player_type in enumerate(player_types, 1)]
+def main(game_type, state, create_player):
+    args = get_cmd_options(game_type+' cmd game')
+
+    player1 = create_player(state, args.player_type1, 1)
+    player2 = create_player(state, args.player_type2, 2)
+    is_save_transcript = args.save_transcript
 
     state.reset()
     print(state)
+    actions = []
     for step, p in enumerate(itertools.cycle((player1, player2))):
         print('[{0}] {1}({2}) action:'.format(step, p.type, p.player_id), end = '', flush = True)
         action = p.get_action(state)
         state.do_action(p.player_id, action)
+        actions.append(action)
         if not player.is_human(p):
             print(action)
         print(state)
@@ -22,5 +31,7 @@ def main(state, create_player):
                 print('player {0} wins'.format(result))
             else:
                 print('draw')
+            if is_save_transcript:
+                save_transcript(os.path.join(os.path.dirname(__file__), game_type+'.trans'), actions)
             break
 

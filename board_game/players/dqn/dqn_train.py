@@ -3,7 +3,7 @@ import itertools
 import numpy as np
 import os
 
-from board_game.utils import replaymemory
+from board_game.players.utils import replaymemory
 
 #np.set_printoptions(threshold = np.nan)
 

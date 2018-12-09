@@ -2,7 +2,7 @@ import itertools
 import numpy as np
 import os
 
-from board_game.utils.utils import get_entropy
+from board_game.players.utils.utils import get_entropy
 
 #np.set_printoptions(threshold = np.nan)
 

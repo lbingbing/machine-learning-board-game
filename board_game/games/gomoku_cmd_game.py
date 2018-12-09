@@ -7,5 +7,5 @@ def main():
     target = 5
     state = GomokuState(board_shape = board_shape, target = target)
 
-    cmd_game.main(state, create_player)
+    cmd_game.main('gomoku', state, create_player)
 

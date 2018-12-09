@@ -1,14 +1,13 @@
 import tkinter as tk
+import os
 
 from .tk_game import BaseApp
 from board_game.states import chess_state
-from board_game.players import player
-from board_game.states.chess_state import ChessState
 
 class ChessApp(BaseApp):
 
     def init_state(self):
-        self.state = ChessState()
+        self.state = chess_state.ChessState()
 
     def create_player(self, state, player_type, player_id):
         from board_game.players.chess_player import create_player
@@ -114,6 +113,9 @@ class ChessApp(BaseApp):
     def is_self_piece(self, player_id, position):
         return chess_state.piece_value_to_player_id(self.state.get_board()[position[0]][position[1]])==player_id
 
+    def get_transcript_save_path(self):
+        return os.path.join(os.path.dirname(__file__), 'chess.trans')
+
     def draw_marker(self, action):
         self.draw_src_marker((action[0], action[1]))
         self.draw_dst_marker((action[2], action[3]))
@@ -137,7 +139,10 @@ class ChessApp(BaseApp):
         self.canvas.delete('legal_dst_markers')
 
 def main():
-    player_types = player.parse_cmd_player_types()
-    app = ChessApp(player_types)
+    from .utils import get_cmd_options
+
+    args = get_cmd_options('chess tk game')
+    player_types = (args.player_type1, args.player_type2)
+    app = ChessApp(player_types, args.save_transcript)
     app.mainloop()
 

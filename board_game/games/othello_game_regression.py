@@ -6,5 +6,5 @@ def main():
     board_shape = (8, 8)
     state = OthelloState(board_shape = board_shape)
 
-    game_regression.main(state, create_player)
+    game_regression.main('othello', state, create_player)
 

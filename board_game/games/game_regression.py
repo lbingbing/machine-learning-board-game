@@ -1,12 +1,17 @@
+import argparse
+import sys
 import itertools
+import os
 
-from board_game.players import player
+from .utils import get_cmd_options
+from board_game.utils.utils import save_transcript
 
-def main(state, create_player):
-    import sys
+def main(game_type, state, create_player):
+    args = get_cmd_options(game_type+' game regression')
 
-    player_types = player.parse_cmd_player_types()
-    player1, player2 = [create_player(state, player_type, player_id) for player_id, player_type in enumerate(player_types, 1)]
+    player1 = create_player(state, args.player_type1, 1)
+    player2 = create_player(state, args.player_type2, 2)
+    is_save_transcript = args.save_transcript
 
     game_num = 100
     results = [0] * 3
@@ -14,12 +19,16 @@ def main(state, create_player):
     print_progress()
     for game_id in range(game_num):
         state.reset()
+        actions = []
         for step, p in enumerate(itertools.cycle((player1, player2))):
             action = p.get_action(state)
             state.do_action(p.player_id, action)
+            actions.append(action)
             result = state.get_result()
             if result >= 0:
                 results[result] += 1
+                if is_save_transcript:
+                    save_transcript(os.path.join(os.path.dirname(__file__), game_type+str(game_id)+'.trans'), actions)
                 break
         print_progress()
     print(file = sys.stderr)

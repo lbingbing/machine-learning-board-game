@@ -6,5 +6,5 @@ def main():
     board_shape = (8, 8)
     state = OthelloState(board_shape = board_shape)
 
-    cmd_game.main(state, create_player)
+    cmd_game.main('othello', state, create_player)
 

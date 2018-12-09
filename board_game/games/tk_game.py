@@ -5,15 +5,17 @@ import threading
 import time
 
 from board_game.players.player import is_human
+from board_game.utils.utils import save_transcript
 
 COMPUTER_STEP_DELAY_IN_SECOND = 0.5
 ASYNC_RESPONSE_POLL_INTERVAL_IN_MILLISECOND = 100
 
 class BaseApp:
 
-    def __init__(self, player_types):
-        self.init_async_worker()
+    def __init__(self, player_types, is_save_transcript):
+        self.is_save_transcript = is_save_transcript
 
+        self.init_async_worker()
         self.init_state()
         self.init_players(player_types)
         self.create_gui()
@@ -80,6 +82,7 @@ class BaseApp:
         self.cancel_async_request()
 
         self.state.reset()
+        self.actions = []
         self.redraw_pieces()
         self.reset_marker()
         self.cur_player_index = 0
@@ -146,17 +149,24 @@ class BaseApp:
 
     def apply_action(self, action):
         self.state.do_action(self.cur_player.player_id, action)
+        self.actions.append(action)
 
         self.redraw_pieces()
         self.root.update_idletasks()
 
         result = self.state.get_result()
-        if result > 0:
-            print('player {0} ({1}) wins'.format(result, self.cur_player.type))
-        elif result == 0:
-            print('draw')
+        if result >= 0:
+            if result > 0:
+                print('player {0} ({1}) wins'.format(result, self.cur_player.type))
+            elif result == 0:
+                print('draw')
+            if self.is_save_transcript:
+                save_transcript(self.get_transcript_save_path(), self.actions)
         else:
             self.toggle_next_player()
+
+    def get_transcript_save_path(self):
+        pass
 
     def get_piece_coord(self, position):
         x0 = (position[1] + 0.5) * self.unit_size

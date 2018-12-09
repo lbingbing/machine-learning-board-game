@@ -5,5 +5,5 @@ def main():
 
     state = ChessState()
 
-    cmd_game.main(state, create_player)
+    cmd_game.main('chess', state, create_player)
 

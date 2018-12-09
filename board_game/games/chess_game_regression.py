@@ -5,5 +5,5 @@ def main():
 
     state = ChessState()
 
-    game_regression.main(state, create_player)
+    game_regression.main('chess', state, create_player)
 

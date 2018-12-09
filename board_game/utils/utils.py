@@ -1,8 +1,11 @@
-import numpy as np
+import itertools
 
 def get_next_player_id(player_id):
     return 3 - player_id
 
-def get_entropy(Ps_m):
-    return np.sum(-np.log(Ps_m + 1e-20) * Ps_m) / np.log(Ps_m.shape[0])
+def save_transcript(transcript_path, actions):
+    with open(transcript_path, 'w') as f:
+        for player_id, action in zip(itertools.cycle((1, 2)), actions):
+            line = '{0} {1}\n'.format(player_id, ','.join(map(str, action)))
+            f.write(line)
 

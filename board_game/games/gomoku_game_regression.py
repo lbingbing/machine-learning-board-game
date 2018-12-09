@@ -7,5 +7,5 @@ def main():
     target = 5
     state = GomokuState(board_shape = board_shape, target = target)
 
-    game_regression.main(state, create_player)
+    game_regression.main('gomoku', state, create_player)
 

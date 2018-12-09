@@ -3,9 +3,9 @@ import numpy as np
 import os
 
 from .policyvaluenetmcts import MctsTree
-from board_game.utils import replaymemory
-from board_game.utils.dynamiclr import DynamicLR
-from board_game.utils.utils import get_entropy
+from board_game.players.utils import replaymemory
+from board_game.players.utils.dynamiclr import DynamicLR
+from board_game.players.utils.utils import get_entropy
 
 def sample(model, rmemory, state, sim_num, dirichlet_factor, dirichlet_alpha):
     state_m_l = []

@@ -1,4 +1,5 @@
 HUMAN_PLAYER              = 'human'
+TRANSCRIPT_PLAYER         = 'transcript'
 RANDOM_PLAYER             = 'random'
 MCTS_PLAYER               = 'mcts'
 PARALLELMCTS_PLAYER       = 'parallelmcts'
@@ -9,6 +10,7 @@ POLICYVALUENETMCTS_PLAYER = 'policyvaluenetmcts'
 
 PLAYER_TYPES = [
                 HUMAN_PLAYER,
+                TRANSCRIPT_PLAYER,
                 RANDOM_PLAYER,
                 MCTS_PLAYER,
                 PARALLELMCTS_PLAYER,
@@ -29,14 +31,4 @@ class Player:
 
 def is_human(player):
     return player.type == HUMAN_PLAYER
-
-def parse_cmd_player_types():
-    import argparse
-
-    parser = argparse.ArgumentParser(description='player type')
-    parser.add_argument('p1', choices=PLAYER_TYPES, help='player1 type')
-    parser.add_argument('p2', choices=PLAYER_TYPES, help='player2 type')
-    args = parser.parse_args()
-
-    return args.p1, args.p2
 
