@@ -45,13 +45,12 @@ class BlackWhiteApp(BaseApp):
         self.canvas.coords('marker', 0, 0, 0, 0)
 
     def handle_human_action(self, x, y):
-        if not self.is_computer_trun() and not self.state.is_end():
+        if not self.state.is_end() and not self.is_computer_trun():
             action = self.get_board_position(x, y)
             if action != None and action in self.state.get_legal_actions(self.cur_player.player_id):
                 self.apply_action(action)
                 self.draw_marker(action)
-                if self.is_computer_trun() and not self.state.is_end():
-                    self.computer_step()
+                self.on_action_end()
 
     def draw_marker(self, action):
         coords = self.get_piece_coord(action)

@@ -17,11 +17,11 @@ class ReplayMemory:
     def sample(self):
         return random.choice(self.mem)
 
-def savetofile(replaymemory, path):
+def save_to_file(replay_memory, path):
     with open(path, 'wb') as f:
-        pickle.dump(replaymemory, f)
+        pickle.dump(replay_memory, f)
 
-def loadfromfile(path):
+def load_from_file(path):
     with open(path, 'rb') as f:
         return pickle.load(f)
 

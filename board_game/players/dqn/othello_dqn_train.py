@@ -1,11 +1,8 @@
-def main():
+def get_config():
     import os
 
     from board_game.states.othello_state import OthelloState
     from .othello_dqn import OthelloDqnModel
-    from . import dqn_train
-
-    print('train Othello dqn model')
 
     board_shape = (8, 8)
     print('board_shape:', board_shape)
@@ -17,17 +14,18 @@ def main():
 
     config = {
         'model_path' : model_path,
-        'replaymemory_file_path' : os.path.join(os.path.dirname(__file__), 'othello_dqn_replaymemory.pickle'),
-        'replaymemory_size' : 64 * 1024,
+        'replay_memory_size' : 64 * 1024,
         'discount' : 0.95,
         'batch_size' : 16,
         'epoch_num' : 4,
         'learning_rate' : 0.001,
         'episode_num' : 2000000,
-        'save_flag_file_path' : os.path.join(os.path.dirname(__file__), 'othello_dqn_train.save'),
-        'saved_flag_file_path' : os.path.join(os.path.dirname(__file__), 'othello_dqn_train.saved'),
-        'stop_flag_file_path' : os.path.join(os.path.dirname(__file__), 'othello_dqn_train.stop'),
     }
 
-    dqn_train.main(state, model, config)
+    return state, model, config
+
+def main():
+    from . import dqn_train
+
+    dqn_train.main('othello', get_config)
 

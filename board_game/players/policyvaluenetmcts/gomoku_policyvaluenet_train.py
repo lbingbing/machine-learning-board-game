@@ -1,10 +1,7 @@
-def main():
+def get_config():
     import os
     from board_game.states.gomoku_state import GomokuState
     from .gomoku_policyvaluenet import GomokuPolicyValueNetModel
-    from . import policyvaluenet_train
-
-    print('train Gomoku policyvaluenet model')
 
     board_shape = (9, 9)
     target = 5
@@ -18,8 +15,7 @@ def main():
 
     config = {
         'model_path' : model_path,
-        'replaymemory_file_path' : os.path.join(os.path.dirname(__file__), 'gomoku_policyvaluenet_replaymemory.pickle'),
-        'replaymemory_size' : 64 * 1024,
+        'replay_memory_size' : 64 * 1024,
         'sim_num' : 1000,
         'dirichlet_factor' : 0.25,
         'dirichlet_alpha' : 0.03,
@@ -27,10 +23,12 @@ def main():
         'batch_size' : 128,
         'learning_rate' : 0.003,
         'episode_num' : 2000000,
-        'save_flag_file_path' : os.path.join(os.path.dirname(__file__), 'gomoku_policyvaluenet_train.save'),
-        'saved_flag_file_path' : os.path.join(os.path.dirname(__file__), 'gomoku_policyvaluenet_train.saved'),
-        'stop_flag_file_path' : os.path.join(os.path.dirname(__file__), 'gomoku_policyvaluenet_train.stop'),
     }
 
-    policyvaluenet_train.main(state, model, config)
+    return state, model, config
+
+def main():
+    from . import policyvaluenet_train
+
+    policyvaluenet_train.main('gomoku', get_config)
 

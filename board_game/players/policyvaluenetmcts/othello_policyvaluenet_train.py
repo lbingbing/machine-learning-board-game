@@ -1,11 +1,8 @@
-def main():
+def get_config():
     import os
 
     from board_game.states.othello_state import OthelloState
     from .othello_policyvaluenet import OthelloPolicyValueNetModel
-    from . import policyvaluenet_train
-
-    print('train Othello policyvaluenet model')
 
     board_shape = (8, 8)
     print('board_shape:', board_shape)
@@ -17,8 +14,7 @@ def main():
 
     config = {
         'model_path' : model_path,
-        'replaymemory_file_path' : os.path.join(os.path.dirname(__file__), 'othello_policyvaluenet_replaymemory.pickle'),
-        'replaymemory_size' : 64 * 1024,
+        'replay_memory_size' : 64 * 1024,
         'sim_num' : 1000,
         'dirichlet_factor' : 0.25,
         'dirichlet_alpha' : 0.03,
@@ -26,10 +22,12 @@ def main():
         'batch_size' : 128,
         'learning_rate' : 0.003,
         'episode_num' : 2000000,
-        'save_flag_file_path' : os.path.join(os.path.dirname(__file__), 'othello_policyvaluenet_train.save'),
-        'saved_flag_file_path' : os.path.join(os.path.dirname(__file__), 'othello_policyvaluenet_train.saved'),
-        'stop_flag_file_path' : os.path.join(os.path.dirname(__file__), 'othello_policyvaluenet_train.stop'),
     }
 
-    policyvaluenet_train.main(state, model, config)
+    return state, model, config
+
+def main():
+    from . import policyvaluenet_train
+
+    policyvaluenet_train.main('othello', get_config)
 

@@ -5,7 +5,8 @@ import threading
 import time
 
 from board_game.players.player import is_human
-from board_game.utils.utils import save_transcript
+from board_game.players.player import is_monitor
+from board_game.games.utils import save_transcript
 
 COMPUTER_STEP_DELAY_IN_SECOND = 0.5
 ASYNC_RESPONSE_POLL_INTERVAL_IN_MILLISECOND = 100
@@ -15,12 +16,16 @@ class BaseApp:
     def __init__(self, player_types, is_save_transcript):
         self.is_save_transcript = is_save_transcript
 
-        self.init_async_worker()
         self.init_state()
         self.init_players(player_types)
+        self.has_human_player = any(is_human(p) for p in self.players)
+        self.is_monitor_mode = all(is_monitor(p) for p in self.players)
         self.create_gui()
         self.bind_events()
+        self.init_async_worker()
         self.reset()
+        if self.is_monitor_mode:
+            self.start()
 
     def init_async_worker(self):
         self.request_queue = queue.Queue()
@@ -39,7 +44,8 @@ class BaseApp:
                 break
             func, arg = item
             action = func(arg)
-            time.sleep(COMPUTER_STEP_DELAY_IN_SECOND)
+            if not self.is_monitor_mode:
+                time.sleep(COMPUTER_STEP_DELAY_IN_SECOND)
             self.response_queue.put(action)
 
     def mainloop(self):
@@ -75,8 +81,10 @@ class BaseApp:
         pass
 
     def bind_events(self):
-        self.root.bind('<Return>', lambda e: (self.reset(), self.start()))
-        self.canvas.bind('<Button-1>', lambda e: self.handle_human_action(e.x, e.y))
+        if not self.is_monitor_mode:
+            self.root.bind('<Return>', lambda e: (self.reset(), self.start()))
+        if self.has_human_player:
+            self.canvas.bind('<Button-1>', lambda e: self.handle_human_action(e.x, e.y))
 
     def reset(self):
         self.cancel_async_request()
@@ -128,8 +136,7 @@ class BaseApp:
             self.is_async_request_sent = False
             self.apply_action(action)
             self.draw_marker(action)
-            if self.is_computer_trun() and not self.state.is_end():
-                self.computer_step()
+            self.on_action_end()
         except queue.Empty:
             self.get_async_action_id = self.root.after(ASYNC_RESPONSE_POLL_INTERVAL_IN_MILLISECOND, self.poll_async_response)
             self.is_polling_async_response = True
@@ -150,20 +157,7 @@ class BaseApp:
     def apply_action(self, action):
         self.state.do_action(self.cur_player.player_id, action)
         self.actions.append(action)
-
         self.redraw_pieces()
-        self.root.update_idletasks()
-
-        result = self.state.get_result()
-        if result >= 0:
-            if result > 0:
-                print('player {0} ({1}) wins'.format(result, self.cur_player.type))
-            elif result == 0:
-                print('draw')
-            if self.is_save_transcript:
-                save_transcript(self.get_transcript_save_path(), self.actions)
-        else:
-            self.toggle_next_player()
 
     def get_transcript_save_path(self):
         pass
@@ -177,4 +171,21 @@ class BaseApp:
 
     def draw_marker(self, action):
         pass
+
+    def on_action_end(self):
+        result = self.state.get_result()
+        if result >= 0:
+            if result > 0:
+                print('player {0} ({1}) wins'.format(result, self.cur_player.type))
+            elif result == 0:
+                print('draw')
+            if self.is_save_transcript:
+                save_transcript(self.get_transcript_save_path(), self.actions)
+            if self.is_monitor_mode:
+                self.reset()
+                self.start()
+        else:
+            self.toggle_next_player()
+            if self.is_computer_trun():
+                self.computer_step()
 

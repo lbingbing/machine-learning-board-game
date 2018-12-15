@@ -1,5 +1,6 @@
 HUMAN_PLAYER              = 'human'
 TRANSCRIPT_PLAYER         = 'transcript'
+MONITOR_PLAYER            = 'monitor'
 RANDOM_PLAYER             = 'random'
 MCTS_PLAYER               = 'mcts'
 PARALLELMCTS_PLAYER       = 'parallelmcts'
@@ -11,6 +12,7 @@ POLICYVALUENETMCTS_PLAYER = 'policyvaluenetmcts'
 PLAYER_TYPES = [
                 HUMAN_PLAYER,
                 TRANSCRIPT_PLAYER,
+                MONITOR_PLAYER,
                 RANDOM_PLAYER,
                 MCTS_PLAYER,
                 PARALLELMCTS_PLAYER,
@@ -31,4 +33,7 @@ class Player:
 
 def is_human(player):
     return player.type == HUMAN_PLAYER
+
+def is_monitor(player):
+    return player.type == MONITOR_PLAYER
 

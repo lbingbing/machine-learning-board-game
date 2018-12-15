@@ -3,11 +3,13 @@ import itertools
 import numpy as np
 import os
 
-from board_game.players.utils import replaymemory
+from board_game.players.utils import replay_memory
+from board_game.players.utils.utils import get_cmd_options
+from board_game.players.utils.training_monitor import TrainingMonitorContext
 
 #np.set_printoptions(threshold = np.nan)
 
-def sample(model, rmemory, state):
+def sample(model, rmemory, state, training_monitor):
     is_first_action = True
     for player_id in itertools.cycle((1, 2)):
         state_m = state.to_state_m()
@@ -22,7 +24,10 @@ def sample(model, rmemory, state):
         n_state_m = state.to_state_m()
         n_state_legal_action_mask_m = state.get_legal_action_mask_m()
         r = 1 if result == player_id else 0
-        is_end = result>=0
+        is_end = (result >= 0)
+
+        if training_monitor != None:
+            training_monitor.send_action((player_id, action, is_end))
 
         if not is_first_action:
             if is_end:
@@ -60,44 +65,70 @@ def train(model, rmemory, action_dim, discount, batch_size, learning_rate, epoch
         losses.append(loss)
     return sum(losses) / len(losses)
 
-def main(state, model, config):
+def main(game_type, get_config):
+    title = 'train {0} dqn model'.format(game_type)
+
+    args = get_cmd_options(title)
+
+    print(title)
+    state, model, config = get_config()
+
+    config['replay_memory_file_path'] = os.path.join(os.path.dirname(__file__), '{0}_dqn_replay_memory.pickle'.format(game_type))
+
     for k, v in config.items():
         print('{0}: {1}'.format(k, v))
 
-    if os.path.isdir(config['model_path']):
+    model_path = config['model_path']
+    replay_memory_file_path = config['replay_memory_file_path']
+    replay_memory_size = config['replay_memory_size']
+    discount = config['discount']
+    batch_size = config['batch_size']
+    epoch_num = config['epoch_num']
+    learning_rate = config['learning_rate']
+    episode_num = config['episode_num']
+
+    save_flag_file_path = os.path.join(os.path.dirname(__file__), '{0}_dqn_train.save'.format(game_type))
+    saved_flag_file_path = os.path.join(os.path.dirname(__file__), '{0}_dqn_train.saved'.format(game_type))
+    stop_flag_file_path = os.path.join(os.path.dirname(__file__), '{0}_dqn_train.stop'.format(game_type))
+    stopped_flag_file_path = os.path.join(os.path.dirname(__file__), '{0}_dqn_train.stopped'.format(game_type))
+
+    if os.path.isdir(model_path):
         model.load()
         print('model loaded')
     else:
         model.init_parameters()
         print('model initialized')
-    if os.path.isfile(config['replaymemory_file_path']):
-        rmemory = replaymemory.loadfromfile(config['replaymemory_file_path'])
+    if os.path.isfile(replay_memory_file_path):
+        rmemory = replay_memory.load_from_file(replay_memory_file_path)
         print('replay memory loaded')
     else:
-        rmemory = replaymemory.ReplayMemory(max_size = config['replaymemory_size'])
+        rmemory = replay_memory.ReplayMemory(max_size = replay_memory_size)
         print('replay memory initialized')
-    scores = [0] * 3
-    for episode_id in range(1, config['episode_num']+1):
-        state.reset()
-        sample(model, rmemory, state)
-        loss = train(model, rmemory, state.get_action_dim(), config['discount'], config['batch_size'], config['learning_rate'], config['epoch_num'])
-        result = state.get_result()
-        scores[result] += 1
-        if episode_id % 1 == 0:
+
+    with TrainingMonitorContext(args.training_monitor_on) as training_monitor:
+        scores = [0] * 3
+        for episode_id in range(1, episode_num+1):
             state.reset()
-            max_Q_logit1, max_Q1 = map(np.asscalar, model.get_max_Q_m(state.to_state_m(), state.get_legal_action_mask_m()))
-            state_m = state.to_state_m()
-            action = model.get_opt_action(state)
-            state.do_action(1, action)
-            max_Q_logit2, max_Q2 = map(np.asscalar, model.get_max_Q_m(state.to_state_m(), state.get_legal_action_mask_m()))
-            print('episode: {0} L: {1:.8f} m_Q_l1: {2:.2f} m_Q1: {3:.6f} m_Q_l2: {4:.2f} m_Q2: {5:.6f} p1/p2/draw: {6}/{7}/{8}'.format(episode_id, loss, max_Q_logit1, max_Q1, max_Q_logit2, max_Q2, scores[1], scores[2], scores[0]))
-        if os.path.isfile(config['save_flag_file_path']):
-            model.save()
-            print('model saved')
-            replaymemory.savetofile(rmemory, config['replaymemory_file_path'])
-            print('replay memory saved')
-            os.rename(config['save_flag_file_path'], config['saved_flag_file_path'])
-        if os.path.isfile(config['stop_flag_file_path']):
-            print('stopped')
-            break
+            sample(model, rmemory, state, training_monitor)
+            loss = train(model, rmemory, state.get_action_dim(), discount, batch_size, learning_rate, epoch_num)
+            result = state.get_result()
+            scores[result] += 1
+            if episode_id % 1 == 0:
+                state.reset()
+                max_Q_logit1, max_Q1 = map(np.asscalar, model.get_max_Q_m(state.to_state_m(), state.get_legal_action_mask_m()))
+                state_m = state.to_state_m()
+                action = model.get_opt_action(state)
+                state.do_action(1, action)
+                max_Q_logit2, max_Q2 = map(np.asscalar, model.get_max_Q_m(state.to_state_m(), state.get_legal_action_mask_m()))
+                print('episode: {0} L: {1:.8f} m_Q_l1: {2:.2f} m_Q1: {3:.6f} m_Q_l2: {4:.2f} m_Q2: {5:.6f} p1/p2/draw: {6}/{7}/{8}'.format(episode_id, loss, max_Q_logit1, max_Q1, max_Q_logit2, max_Q2, scores[1], scores[2], scores[0]))
+            if os.path.isfile(save_flag_file_path):
+                model.save()
+                print('model saved')
+                replay_memory.save_to_file(rmemory, replay_memory_file_path)
+                print('replay memory saved')
+                os.rename(save_flag_file_path, saved_flag_file_path)
+            if os.path.isfile(stop_flag_file_path):
+                print('stopped')
+                os.rename(stop_flag_file_path, stopped_flag_file_path)
+                break
 

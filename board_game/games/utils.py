@@ -1,3 +1,5 @@
+import itertools
+
 def get_cmd_options(title):
     import argparse
     from board_game.players import player
@@ -8,4 +10,10 @@ def get_cmd_options(title):
     parser.add_argument('--save_transcript', action='store_true', help='save transcript')
     args = parser.parse_args()
     return args
+
+def save_transcript(transcript_path, actions):
+    with open(transcript_path, 'w') as f:
+        for player_id, action in zip(itertools.cycle((1, 2)), actions):
+            line = '{0} {1}\n'.format(player_id, ','.join(map(str, action)))
+            f.write(line)
 

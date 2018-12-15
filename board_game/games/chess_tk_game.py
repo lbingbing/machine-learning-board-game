@@ -88,7 +88,7 @@ class ChessApp(BaseApp):
         self.delete_legal_dst_markers()
 
     def handle_human_action(self, x, y):
-        if not self.is_computer_trun() and not self.state.is_end():
+        if not self.state.is_end() and not self.is_computer_trun():
             position = self.get_board_position(x, y)
             if position != None:
                 if self.is_self_piece(self.cur_player.player_id, position):
@@ -107,8 +107,7 @@ class ChessApp(BaseApp):
                     self.human_action_src_phase = True
                     self.human_action_src_position = None
                     self.human_action_legal_dst_positions = None
-                    if self.is_computer_trun() and not self.state.is_end():
-                        self.computer_step()
+                    self.on_action_end()
 
     def is_self_piece(self, player_id, position):
         return chess_state.piece_value_to_player_id(self.state.get_board()[position[0]][position[1]])==player_id

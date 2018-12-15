@@ -11,6 +11,9 @@ def create_player(state, player_type, player_id):
         from .transcript.transcript_player import TranscriptPlayer
         transcript_path = os.path.join(os.path.dirname(__file__), 'transcript', 'gomoku.trans')
         p = TranscriptPlayer(player_id = player_id, transcript_path = transcript_path)
+    elif player_type == player.MONITOR_PLAYER:
+        from .monitor.monitor_player import MonitorPlayer
+        p = MonitorPlayer(player_id = player_id)
     elif player_type == player.RANDOM_PLAYER:
         from .random.random_player import RandomPlayer
         p = RandomPlayer(player_id = player_id)

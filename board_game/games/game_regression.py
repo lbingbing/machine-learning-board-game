@@ -4,7 +4,7 @@ import itertools
 import os
 
 from .utils import get_cmd_options
-from board_game.utils.utils import save_transcript
+from board_game.games.utils import save_transcript
 
 def main(game_type, state, create_player):
     args = get_cmd_options(game_type+' game regression')

@@ -1,12 +1,9 @@
-def main():
+def get_config():
     import os
 
     from board_game.states.gomoku_state import GomokuState
     from .gomoku_policynet import GomokuPolicyNetModel
     from .gomoku_evaluationnet import GomokuEvaluationNetModel
-    from . import policynet_train
-
-    print('train Gomoku policynet model')
 
     board_shape = (9, 9)
     target = 5
@@ -28,10 +25,12 @@ def main():
         'batch_size' : 4,
         'learning_rate' : 0.0003,
         'episode_num' : 2000000,
-        'save_flag_file_path' : os.path.join(os.path.dirname(__file__), 'gomoku_policynet_train.save'),
-        'saved_flag_file_path' : os.path.join(os.path.dirname(__file__), 'gomoku_policynet_train.saved'),
-        'stop_flag_file_path' : os.path.join(os.path.dirname(__file__), 'gomoku_policynet_train.stop'),
     }
 
-    policynet_train.main(state, pmodel, emodel, config)
+    return state, pmodel, emodel, config
+
+def main():
+    from . import policynet_train
+
+    policynet_train.main('gomoku', get_config)
 
